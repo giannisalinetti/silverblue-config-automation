@@ -1,0 +1,81 @@
+- name: Set a hostname to {{ host.name }} {{ task_identifier }}
+  ansible.builtin.hostname:
+    name: "{{ host.name }}"
+    use: systemd
+
+- name: Gather the package facts {{ task_identifier }} 
+  ansible.builtin.package_facts:
+    manager: auto
+
+- set_fact:
+    gnome_shell_current_major: "{{ ((ansible_facts.packages['gnome-shell'] | first).version).split('.') | first }}"
+
+- name: Create empty vmbr0 bridge {{ task_identifier }}
+  community.general.nmcli:
+    type: bridge
+    conn_name: vmbr0
+    state: present
+
+- name: Create directories {{ task_identifier }}
+  ansible.builtin.file:
+    path: "{{ directory.path }}"
+    state: directory
+    mode: "{{ directory.mode }}"
+  loop:
+    - { path: "{{ ansible_user_dir }}/.config/user-tmpfiles.d", mode: "0755" }
+  loop_control:
+    loop_var: directory
+
+- name: Add git settings to ~/.gitconfig {{ task_identifier }}
+  community.general.git_config:
+    name: "{{ git_config.name }}"
+    scope: "{{ git_config.scope }}"
+    value: "{{ git_config.value }}"
+  loop:
+    - { name: core.editor, scope: global, value: vi }
+    - { name: user.name, scope: global, value: Jay W }
+    - { name: user.email, scope: global, value: git.jaydoubleu@gmail.com }
+  loop_control:
+    loop_var: git_config
+
+- name: Create podman-docker wrapper {{ task_identifier }}
+  ansible.builtin.copy:
+    src: templates/docker.sh
+    dest: "{{ ansible_user_dir }}/.local/bin/docker"
+    mode: a+x
+
+- name: Download local binary packages {{ task_identifier }}
+  get_url:
+    url: "{{ app.url }}"
+    dest: "{{ ansible_user_dir }}/.local/bin/{{ app.name }}"
+    mode: a+x
+  register: bin
+  loop_control:
+    loop_var: app
+  loop: "{{ host.local_packages.bins }}"
+  retries: 15
+  delay: 30
+  until: bin.failed == False
+
+- name: Download local binary archive {{ task_identifier }}
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "{{ app.url }}"
+    dest: "{{ ansible_user_dir }}/.local/bin/"
+    include: "{{ app.exclude | default([]) }}"
+    mode: a+x
+  loop_control:
+    loop_var: app
+  loop: "{{ host.local_packages.archives }}"
+
+- name: Set default GRUB timeout to 15 seconds {{ task_identifier }}
+  lineinfile:
+    dest: /etc/default/grub
+    line: GRUB_TIMEOUT=15
+    regexp: '^(GRUB_TIMEOUT)=[0-9]*$'
+    state: present
+  become: yes
+  notify: grub2-mkconfig
+
+- name: Flush handlers
+  meta: flush_handlers
