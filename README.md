@@ -18,7 +18,7 @@ python3 -m pip install ansible
 - Edit the `configs/toolbox.yaml` to customize the toolbox container, including the packages installed inside it.
 - Edit the `configs/host.yaml` file to customize the host and add layered packages using `rpm-ostree`.
 - Edit the `configs/host_gnome_dconf.yaml` file to customize the host Gnome settings and behavior.
-- Edit the `configs/host_gnome_extensions.yaml' to customize the host Gnome extensions.
+- Edit the `configs/host_gnome_extensions.yaml` to customize the host Gnome extensions.
 
 ### Run
 Run the automation using the command:
@@ -26,10 +26,9 @@ Run the automation using the command:
 ansible-playbook main.yaml -K
 ```
 
-The `-K` option is necessary to elevate user privileges.
+**NOTE**: the `-K` option is necessary to elevate user privileges.
 
 ### Targeting
-
 It is possible to run only specific customization using Ansible tags:
 - `ansible-playbook main.yaml --tags flatpak` <- Run only flatpak tasks
 - `ansible-playbook main.yaml --tags toolbox` <- Run only toolbox tasks ( for all toolboxes )
