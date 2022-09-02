@@ -10,15 +10,27 @@ Install ansible on silverblue without rpm-ostree
 ```
 python3 -m ensurepip
 python3 -m pip install ansible
-ansible --version
 ```
 
-### Run
-- Edit `configs/flatpak.yaml`, `configs/toolbox.yaml` and `config/host.yaml` to customize the configurations.
-- Run with `ansible-playbook main.yaml -K`
-- Flatpak names are case sensitive. While flatpak is ok with it, creation of symlinks will fail.
+### Configuration
+- Edit the `configs/flatpak.yaml` file to customize the list of Flatpak applications installed in the system.
+  **NOTE**: Flatpak names are case sensitive. While flatpak is ok with it, creation of symlinks will fail.
+- Edit the `configs/toolbox.yaml` to customize the toolbox container, including the packages installed inside it.
+- Edit the `configs/host.yaml` file to customize the host and add layered packages using `rpm-ostree`.
+- Edit the `configs/host_gnome_dconf.yaml` file to customize the host Gnome settings and behavior.
+- Edit the `configs/host_gnome_extensions.yaml' to customize the host Gnome extensions.
 
-### Targeting:
+### Run
+Run the automation using the command:
+```
+ansible-playbook main.yaml -K
+```
+
+The `-K` option is necessary to elevate user privileges.
+
+### Targeting
+
+It is possible to run only specific customization using Ansible tags:
 - `ansible-playbook main.yaml --tags flatpak` <- Run only flatpak tasks
 - `ansible-playbook main.yaml --tags toolbox` <- Run only toolbox tasks ( for all toolboxes )
 - `ansible-playbook main.yaml --tags fedora-toolbox-35` <- Run only specific toolbox tasks
